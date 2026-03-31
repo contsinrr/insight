@@ -396,7 +396,12 @@ struct ReportHistoryView: View {
             } else {
                 VStack(spacing: 12) {
                     ForEach(displayedReports) { report in
-                        ArchiveReportRow(report: report)
+                        NavigationLink {
+                            ReportDetailView(report: report)
+                        } label: {
+                            ArchiveReportRow(report: report)
+                        }
+                        .buttonStyle(.plain)
                     }
                 }
             }
