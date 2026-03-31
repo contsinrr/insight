@@ -227,6 +227,8 @@ struct ReportHistoryView: View {
                 heartRateChart
                     .frame(height: 160)
                     .background(Color.white)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .clipped()
             } else {
                 emptyChartPlaceholder("暂无心率数据", height: 160)
             }
@@ -347,6 +349,8 @@ struct ReportHistoryView: View {
                             sleepTrendChart
                                 .frame(height: 240)
                                 .background(Color.white)
+                                .clipShape(RoundedRectangle(cornerRadius: 12))
+                                .clipped()
                         } else {
                             emptyChartPlaceholder("暂无睡眠数据", height: 240)
                         }
