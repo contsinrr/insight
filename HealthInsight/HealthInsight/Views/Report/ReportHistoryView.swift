@@ -226,6 +226,7 @@ struct ReportHistoryView: View {
             if !reportGenerator.heartRateData.isEmpty {
                 heartRateChart
                     .frame(height: 160)
+                    .background(Color.white)
             } else {
                 emptyChartPlaceholder("暂无心率数据", height: 160)
             }
@@ -305,8 +306,9 @@ struct ReportHistoryView: View {
     private var sleepTrendSheet: some View {
         NavigationStack {
             ZStack {
-                bgGradient.ignoresSafeArea()
-
+                // Solid background
+                Color(.systemBackground).ignoresSafeArea()
+                
                 VStack(spacing: 16) {
                     // Summary card
                     VStack(alignment: .leading, spacing: 12) {
@@ -344,6 +346,7 @@ struct ReportHistoryView: View {
                         if !reportGenerator.sleepTrendData.isEmpty {
                             sleepTrendChart
                                 .frame(height: 240)
+                                .background(Color.white)
                         } else {
                             emptyChartPlaceholder("暂无睡眠数据", height: 240)
                         }
