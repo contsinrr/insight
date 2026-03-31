@@ -34,6 +34,9 @@ struct ReportHistoryView: View {
     var body: some View {
         NavigationStack {
             ZStack {
+                // Solid background to prevent any see-through
+                Color(.systemBackground).ignoresSafeArea()
+                
                 bgGradient.ignoresSafeArea()
 
                 ScrollView(showsIndicators: false) {
@@ -57,7 +60,6 @@ struct ReportHistoryView: View {
                     .padding(.top, 8)
                     .padding(.bottom, 40)
                 }
-                .background(Color.white.opacity(0.95)) // Add semi-opaque background to prevent see-through
             }
             .navigationTitle("")
             .navigationBarHidden(true)
@@ -465,13 +467,7 @@ struct ReportHistoryView: View {
                     x: .value("时间", point.time, unit: .hour),
                     y: .value("BPM", point.bpm)
                 )
-                .foregroundStyle(
-                    LinearGradient(
-                        colors: [primaryColor.opacity(0.7), primaryColor.opacity(0.3)],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                )
+                .foregroundStyle(primaryColor)
                 .cornerRadius(3)
             }
         }
@@ -494,13 +490,7 @@ struct ReportHistoryView: View {
                     x: .value("日期", point.date, unit: .day),
                     y: .value("小时", point.value)
                 )
-                .foregroundStyle(
-                    LinearGradient(
-                        colors: [Color.indigo.opacity(0.7), Color.indigo.opacity(0.3)],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                )
+                .foregroundStyle(Color.indigo)
                 .cornerRadius(4)
             }
 
