@@ -23,12 +23,22 @@ struct StreamingMarkdownView: View {
     let isStreaming: Bool
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            // Split text into blocks by double newlines for better rendering
-            let blocks = text.components(separatedBy: "\n\n").filter { !$0.isEmpty }
-
-            ForEach(Array(blocks.enumerated()), id: \.offset) { _, block in
-                renderBlock(block)
+        VStack(alignment: .leading, spacing: 8) {
+            // Render the entire text as a single block to avoid overlapping
+            if let attributed = try? AttributedString(
+                markdown: text,
+                options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace)
+            ) {
+                Text(attributed)
+                    .font(.body)
+                    .lineSpacing(4)
+                    .textSelection(.enabled)
+            } else {
+                // Fallback: render as plain text with line breaks
+                Text(text)
+                    .font(.body)
+                    .lineSpacing(4)
+                    .textSelection(.enabled)
             }
 
             if isStreaming {
@@ -44,21 +54,6 @@ struct StreamingMarkdownView: View {
                 }
                 .padding(.top, 4)
             }
-        }
-    }
-
-    @ViewBuilder
-    private func renderBlock(_ block: String) -> some View {
-        if let attributed = try? AttributedString(markdown: block, options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace)) {
-            Text(attributed)
-                .font(.body)
-                .lineSpacing(4)
-                .textSelection(.enabled)
-        } else {
-            Text(block)
-                .font(.body)
-                .lineSpacing(4)
-                .textSelection(.enabled)
         }
     }
 }
