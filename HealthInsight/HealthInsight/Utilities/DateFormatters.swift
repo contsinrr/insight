@@ -22,6 +22,13 @@ enum DateFormatters {
         return formatter
     }()
 
+    static let mediumDate: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "zh_CN")
+        formatter.dateFormat = "yyyy 年 M 月 d 日"
+        return formatter
+    }()
+
     static let reportDate: DateFormatter = {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "zh_CN")
