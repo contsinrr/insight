@@ -465,9 +465,10 @@ struct ReportHistoryView: View {
 
     private var heartRateChart: some View {
         let data = reportGenerator.heartRateData
-        let minBPM = (data.map(\.bpm).min() ?? 50) - 10
-        let maxBPM = (data.map(\.bpm).max() ?? 120) + 10
-
+        let maxBPM = (data.map(\.bpm).max() ?? 120)
+        // 设置 Y 轴最大值为数据最大值的 140%，让柱子只占约 70% 高度，留出空间显示趋势变化
+        let chartMax = Int(Double(maxBPM) * 1.4)
+        
         return Chart {
             ForEach(data) { point in
                 BarMark(
@@ -478,7 +479,7 @@ struct ReportHistoryView: View {
                 .cornerRadius(3)
             }
         }
-        .chartYScale(domain: minBPM...maxBPM)
+        .chartYScale(domain: 0...chartMax)
         .chartYAxis(.hidden)
         .chartXAxis {
             AxisMarks(values: .stride(by: .hour, count: 4)) { value in
