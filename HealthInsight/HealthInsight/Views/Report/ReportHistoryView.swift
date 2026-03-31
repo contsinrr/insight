@@ -490,7 +490,9 @@ struct ReportHistoryView: View {
 
     private var sleepTrendChart: some View {
         let data = reportGenerator.sleepTrendData
-
+        let maxValue = data.map(\.value).max() ?? 12
+        let chartMax = max(maxValue + 2, 10) // 至少显示到 10 小时，或最大值 +2
+        
         return Chart {
             ForEach(data) { point in
                 BarMark(
@@ -505,6 +507,7 @@ struct ReportHistoryView: View {
                 .foregroundStyle(.indigo.opacity(0.5))
                 .lineStyle(StrokeStyle(lineWidth: 2, dash: [5, 3]))
         }
+        .chartYScale(domain: 0...chartMax)
         .chartYAxis {
             AxisMarks(position: .leading) { value in
                 AxisGridLine()
