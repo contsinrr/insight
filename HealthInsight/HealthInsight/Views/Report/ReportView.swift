@@ -19,11 +19,8 @@ struct ReportView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                // Add solid white background first to block see-through
-                Color.white.ignoresSafeArea()
-                
-                // Then add gradient on top
-                bgGradient.ignoresSafeArea()
+                // Use solid color background only - no gradient to avoid transparency issues
+                Color(.systemBackground).ignoresSafeArea()
 
                 ScrollView {
                     VStack(spacing: 16) {
