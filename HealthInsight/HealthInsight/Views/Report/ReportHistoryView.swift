@@ -78,7 +78,7 @@ struct ReportHistoryView: View {
                         .foregroundStyle(.secondary)
                 }
             }
-            .sheet(isPresented: $showReportSheet) {
+            .fullScreenCover(isPresented: $showReportSheet) {
                 ReportView()
             }
             .sheet(isPresented: $showSleepTrendSheet) {
