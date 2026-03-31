@@ -4,7 +4,7 @@ import Charts
 
 struct ReportHistoryView: View {
     @Query(sort: \HealthReport.createdAt, order: .reverse)
-    private var reports: [HealthReport]
+    private var allReports: [HealthReport]
 
     @Environment(\.modelContext) private var modelContext
     @Environment(AIService.self) private var aiService
@@ -13,6 +13,8 @@ struct ReportHistoryView: View {
 
     @State private var showReportSheet = false
     @State private var showSettingsAlert = false
+    @State private var showAllReports = false
+    @State private var showSleepTrendSheet = false
 
     private let primaryColor = Color(red: 0.45, green: 0.40, blue: 0.85)
     private let bgGradient = LinearGradient(
@@ -20,13 +22,22 @@ struct ReportHistoryView: View {
         startPoint: .top, endPoint: .bottom
     )
 
+    // Limit to 7 reports by default
+    private var displayedReports: [HealthReport] {
+        if showAllReports {
+            return Array(allReports)
+        } else {
+            return Array(allReports.prefix(7))
+        }
+    }
+
     var body: some View {
         NavigationStack {
             ZStack {
                 bgGradient.ignoresSafeArea()
 
                 ScrollView(showsIndicators: false) {
-                    VStack(alignment: .leading, spacing: 24) {
+                    VStack(alignment: .leading, spacing: 20) {
                         // Header
                         headerSection
 
@@ -56,7 +67,7 @@ struct ReportHistoryView: View {
                             .font(.title2)
                             .foregroundStyle(primaryColor)
                         Text("健康洞察")
-                            .font(.title2.bold())
+                            .font(.title2).fontWeight(.bold)
                             .foregroundStyle(.primary)
                     }
                 }
@@ -68,6 +79,9 @@ struct ReportHistoryView: View {
             }
             .sheet(isPresented: $showReportSheet) {
                 ReportView()
+            }
+            .sheet(isPresented: $showSleepTrendSheet) {
+                sleepTrendSheet
             }
             .alert("需要设置 API Key", isPresented: $showSettingsAlert) {
                 Button("好的") {}
@@ -85,22 +99,18 @@ struct ReportHistoryView: View {
 
     private var headerSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            // Smart Analysis System tag
             Text("智能分析系统")
-                .font(.caption2)
-                .fontWeight(.medium)
+                .font(.caption2).fontWeight(.medium)
                 .foregroundStyle(primaryColor)
                 .padding(.horizontal, 10)
                 .padding(.vertical, 4)
                 .background(primaryColor.opacity(0.1))
                 .clipShape(Capsule())
 
-            // Main title
             Text("健康报告")
                 .font(.system(size: 32, weight: .bold))
                 .foregroundStyle(.primary)
 
-            // Subtitle
             Text("详细分析您的生理趋势并提供 AI 驱动的健康优化方案。")
                 .font(.caption)
                 .foregroundStyle(.secondary)
@@ -113,14 +123,13 @@ struct ReportHistoryView: View {
 
     private var weeklyInsightsCard: some View {
         VStack(alignment: .leading, spacing: 16) {
-            // Card header
             HStack {
                 HStack(spacing: 6) {
                     Image(systemName: "sparkles")
                         .font(.caption)
                         .foregroundStyle(.green)
                     Text("AI 洞察")
-                        .font(.caption.bold())
+                        .font(.caption).fontWeight(.bold)
                         .foregroundStyle(.green)
                 }
                 .padding(.horizontal, 12)
@@ -135,12 +144,10 @@ struct ReportHistoryView: View {
                     .foregroundStyle(.tertiary)
             }
 
-            // Title
-            Text("每周洞察 \(DateFormatters.mediumDate.string(from: Date()))")
-                .font(.headline)
+            Text("每周洞察 \(DateFormatters.shortDate.string(from: Date()))")
+                .font(.headline).fontWeight(.bold)
                 .foregroundStyle(.primary)
 
-            // Sleep insight
             InsightRow(
                 icon: "moon.fill",
                 iconColor: .indigo,
@@ -150,7 +157,6 @@ struct ReportHistoryView: View {
                 description: "本周您的深度睡眠周期增加了 14%。保持晚上 10 点开始放松休息的习惯稳定了您的昼夜节律。"
             )
 
-            // Exercise insight
             InsightRow(
                 icon: "figure.run",
                 iconColor: .orange,
@@ -160,7 +166,6 @@ struct ReportHistoryView: View {
                 description: "每日步数稳定在 8,500 步。考虑在下午增加运动强度以提升代谢率。"
             )
 
-            // View full analysis button
             Button {
                 if aiService.isApiKeySet {
                     showReportSheet = true
@@ -173,7 +178,7 @@ struct ReportHistoryView: View {
                     Spacer()
                     Image(systemName: "arrow.right")
                 }
-                .font(.subheadline.bold())
+                .font(.subheadline).fontWeight(.bold)
                 .foregroundStyle(primaryColor)
                 .padding(.vertical, 12)
                 .frame(maxWidth: .infinity)
@@ -193,11 +198,10 @@ struct ReportHistoryView: View {
 
     private var trendAnalysisCard: some View {
         VStack(alignment: .leading, spacing: 16) {
-            // Header
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("趋势分析")
-                        .font(.headline)
+                        .font(.headline).fontWeight(.bold)
                         .foregroundStyle(.primary)
                     Text("心率波动（今日）")
                         .font(.caption)
@@ -206,7 +210,6 @@ struct ReportHistoryView: View {
 
                 Spacer()
 
-                // Average BPM
                 VStack(alignment: .trailing, spacing: 2) {
                     Text("\(averageBPM)")
                         .font(.system(size: 28, weight: .bold))
@@ -217,7 +220,6 @@ struct ReportHistoryView: View {
                 }
             }
 
-            // Heart rate chart
             if !reportGenerator.heartRateData.isEmpty {
                 heartRateChart
                     .frame(height: 160)
@@ -236,93 +238,166 @@ struct ReportHistoryView: View {
     // MARK: - 30 Day Sleep Duration Card
 
     private var sleepDurationCard: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            // Header
-            HStack {
-                Text("30 天睡眠时长")
-                    .font(.headline)
-                    .foregroundStyle(.primary)
-
-                Spacer()
-
-                Image(systemName: "ellipsis")
-                    .font(.subheadline)
-                    .foregroundStyle(.tertiary)
-            }
-
-            // Sleep stats visualization
-            HStack(spacing: 20) {
-                // Progress bars
-                VStack(spacing: 6) {
-                    ForEach(0..<5, id: \.self) { index in
-                        RoundedRectangle(cornerRadius: 3)
-                            .fill(sleepBarColor(for: index))
-                            .frame(width: CGFloat(60 + index * 12), height: 8)
-                    }
-                }
-
-                Spacer()
-
-                // Average hours
-                VStack(alignment: .trailing, spacing: 4) {
-                    Text("\(sleepAvgHours, specifier: "%.1f")")
-                        .font(.system(size: 36, weight: .bold))
+        Button {
+            showSleepTrendSheet = true
+        } label: {
+            VStack(alignment: .leading, spacing: 16) {
+                HStack {
+                    Text("30 天睡眠时长")
+                        .font(.headline).fontWeight(.bold)
                         .foregroundStyle(.primary)
-                    HStack(spacing: 2) {
-                        Text("小时")
-                            .font(.caption)
-                            .foregroundStyle(.tertiary)
-                        Text("目标：8 小时")
-                            .font(.caption2)
-                            .foregroundStyle(.green)
+
+                    Spacer()
+
+                    Image(systemName: "ellipsis")
+                        .font(.subheadline)
+                        .foregroundStyle(.tertiary)
+                }
+
+                HStack(spacing: 20) {
+                    VStack(spacing: 6) {
+                        ForEach(0..<5, id: \.self) { index in
+                            RoundedRectangle(cornerRadius: 3)
+                                .fill(sleepBarColor(for: index))
+                                .frame(width: CGFloat(60 + index * 12), height: 8)
+                        }
+                    }
+
+                    Spacer()
+
+                    VStack(alignment: .trailing, spacing: 4) {
+                        Text(String(format: "%.1f", sleepAvgHours))
+                            .font(.system(size: 36, weight: .bold))
+                            .foregroundStyle(.primary)
+                        HStack(spacing: 2) {
+                            Text("小时")
+                                .font(.caption)
+                                .foregroundStyle(.tertiary)
+                            Text("目标：8 小时")
+                                .font(.caption2)
+                                .foregroundStyle(.green)
+                        }
                     }
                 }
+                .padding(.vertical, 8)
             }
-            .padding(.vertical, 8)
-        }
-        .padding(20)
-        .background(
-            RoundedRectangle(cornerRadius: 24)
-                .fill(
-                    LinearGradient(
-                        colors: [Color(red: 0.93, green: 0.91, blue: 0.96), Color.white],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
+            .padding(20)
+            .background(
+                RoundedRectangle(cornerRadius: 24)
+                    .fill(
+                        LinearGradient(
+                            colors: [Color(red: 0.93, green: 0.91, blue: 0.96), Color.white],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
                     )
-                )
-                .shadow(color: .black.opacity(0.04), radius: 12, x: 0, y: 4)
-        )
+                    .shadow(color: .black.opacity(0.04), radius: 12, x: 0, y: 4)
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
+    // MARK: - Sleep Trend Sheet
+
+    private var sleepTrendSheet: some View {
+        NavigationStack {
+            ZStack {
+                bgGradient.ignoresSafeArea()
+
+                VStack(spacing: 16) {
+                    // Summary card
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("近 30 天平均睡眠")
+                            .font(.headline).fontWeight(.bold)
+
+                        HStack(alignment: .firstTextBaseline, spacing: 8) {
+                            Text("\(sleepAvgHours, specifier: "%.1f")")
+                                .font(.system(size: 48, weight: .bold))
+                                .foregroundStyle(primaryColor)
+                            Text("小时")
+                                .font(.title3)
+                                .foregroundStyle(.secondary)
+                        }
+
+                        HStack(spacing: 16) {
+                            StatBadge(label: "最佳", value: String(format: "%.1f", bestSleepNight) + "h", icon: "star.fill", color: .yellow)
+                            StatBadge(label: "最差", value: String(format: "%.1f", worstSleepNight) + "h", icon: "moon.zzz.fill", color: .gray)
+                        }
+                    }
+                    .padding(20)
+                    .background(
+                        RoundedRectangle(cornerRadius: 20)
+                            .fill(.white)
+                            .shadow(color: .black.opacity(0.04), radius: 12, x: 0, y: 4)
+                    )
+                    .padding(.horizontal)
+                    .padding(.top, 8)
+
+                    // Chart
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("每日睡眠趋势")
+                            .font(.headline).fontWeight(.bold)
+
+                        if !reportGenerator.sleepTrendData.isEmpty {
+                            sleepTrendChart
+                                .frame(height: 240)
+                        } else {
+                            emptyChartPlaceholder("暂无睡眠数据", height: 240)
+                        }
+                    }
+                    .padding(20)
+                    .background(
+                        RoundedRectangle(cornerRadius: 20)
+                            .fill(.white)
+                            .shadow(color: .black.opacity(0.04), radius: 12, x: 0, y: 4)
+                    )
+                    .padding(.horizontal)
+
+                    Spacer()
+                }
+            }
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("完成") {
+                        showSleepTrendSheet = false
+                    }
+                    .fontWeight(.bold)
+                    .foregroundStyle(primaryColor)
+                }
+            }
+        }
     }
 
     // MARK: - Report Archive Section
 
     private var reportArchiveSection: some View {
         VStack(alignment: .leading, spacing: 16) {
-            // Section header
             HStack {
                 Text("报告存档")
-                    .font(.title2.bold())
+                    .font(.title2).fontWeight(.bold)
                     .foregroundStyle(.primary)
 
                 Spacer()
 
-                Button(role: .none) {
-                    // Navigate to full archive
+                Button {
+                    withAnimation {
+                        showAllReports.toggle()
+                    }
                 } label: {
-                    Text("查看全部")
-                        .font(.subheadline.bold())
+                    Text(showAllReports ? "收起" : "查看全部")
+                        .font(.subheadline).fontWeight(.bold)
                         .foregroundStyle(primaryColor)
                 }
             }
 
-            // Report list
-            VStack(spacing: 12) {
-                ForEach(reports.prefix(3)) { report in
-                    ArchiveReportRow(report: report)
-                }
-
-                if reports.isEmpty {
-                    emptyArchivePlaceholder
+            if displayedReports.isEmpty {
+                emptyArchivePlaceholder
+            } else {
+                VStack(spacing: 12) {
+                    ForEach(displayedReports) { report in
+                        ArchiveReportRow(report: report)
+                    }
                 }
             }
         }
@@ -347,9 +422,19 @@ struct ReportHistoryView: View {
     }
 
     private var sleepAvgHours: Double {
-        let values = reportGenerator.sleepTrendData.map(\.value)
+        let values = reportGenerator.sleepTrendData.filter { $0.value > 0 }.map(\.value)
         guard !values.isEmpty else { return 0.0 }
         return values.reduce(0, +) / Double(values.count)
+    }
+
+    private var bestSleepNight: Double {
+        let values = reportGenerator.sleepTrendData.filter { $0.value > 0 }.map(\.value)
+        return values.max() ?? 0.0
+    }
+
+    private var worstSleepNight: Double {
+        let values = reportGenerator.sleepTrendData.filter { $0.value > 0 }.map(\.value)
+        return values.min() ?? 0.0
     }
 
     private func sleepBarColor(for index: Int) -> Color {
@@ -389,6 +474,48 @@ struct ReportHistoryView: View {
         .chartXAxis {
             AxisMarks(values: .stride(by: .hour, count: 4)) { value in
                 AxisValueLabel(format: .dateTime.hour())
+                    .font(.caption2)
+            }
+        }
+    }
+
+    private var sleepTrendChart: some View {
+        let data = reportGenerator.sleepTrendData
+
+        return Chart {
+            ForEach(data) { point in
+                BarMark(
+                    x: .value("日期", point.date, unit: .day),
+                    y: .value("小时", point.value)
+                )
+                .foregroundStyle(
+                    LinearGradient(
+                        colors: [Color.indigo.opacity(0.7), Color.indigo.opacity(0.3)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
+                .cornerRadius(4)
+            }
+
+            RuleMark(y: .value("平均", sleepAvgHours))
+                .foregroundStyle(.indigo.opacity(0.5))
+                .lineStyle(StrokeStyle(lineWidth: 2, dash: [5, 3]))
+        }
+        .chartYAxis {
+            AxisMarks(position: .leading) { value in
+                AxisGridLine()
+                AxisValueLabel {
+                    if let h = value.as(Double.self) {
+                        Text("\(String(format: "%.0f", h))h")
+                            .font(.caption2)
+                    }
+                }
+            }
+        }
+        .chartXAxis {
+            AxisMarks(values: .stride(by: .day, count: 5)) { value in
+                AxisValueLabel(format: .dateTime.month(.abbreviated).day())
                     .font(.caption2)
             }
         }
@@ -442,26 +569,23 @@ struct InsightRow: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
-            // Icon
-            ZStack {
-                Circle()
-                    .fill(iconColor.opacity(0.1))
-                    .frame(width: 40, height: 40)
-                Image(systemName: icon)
-                    .font(.system(size: 16))
-                    .foregroundStyle(iconColor)
-            }
+            Circle()
+                .fill(iconColor.opacity(0.1))
+                .frame(width: 40, height: 40)
+                .overlay {
+                    Image(systemName: icon)
+                        .font(.system(size: 16))
+                        .foregroundStyle(iconColor)
+                }
 
-            // Content
             VStack(alignment: .leading, spacing: 6) {
                 HStack(spacing: 8) {
                     Text(category)
-                        .font(.subheadline.bold())
+                        .font(.subheadline).fontWeight(.bold)
                         .foregroundStyle(.primary)
 
                     Text(status)
-                        .font(.caption2)
-                        .fontWeight(.medium)
+                        .font(.caption2).fontWeight(.medium)
                         .foregroundStyle(statusColor)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 2)
@@ -488,38 +612,30 @@ struct ArchiveReportRow: View {
 
     var body: some View {
         HStack(spacing: 16) {
-            // Icon
-            ZStack {
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(primaryColor.opacity(0.1))
-                    .frame(width: 50, height: 50)
-                Image(systemName: "doc.richtext")
-                    .font(.system(size: 20))
-                    .foregroundStyle(primaryColor)
-            }
+            RoundedRectangle(cornerRadius: 12)
+                .fill(primaryColor.opacity(0.1))
+                .frame(width: 50, height: 50)
+                .overlay {
+                    Image(systemName: "doc.richtext")
+                        .font(.system(size: 20))
+                        .foregroundStyle(primaryColor)
+                }
 
-            // Content
             VStack(alignment: .leading, spacing: 4) {
-                Text("\(DateFormatters.mediumDate.string(from: report.date))深度分析报告")
-                    .font(.subheadline.bold())
+                Text("\(DateFormatters.mediumDate.string(from: report.date)) 深度分析报告")
+                    .font(.subheadline).fontWeight(.bold)
                     .foregroundStyle(.primary)
                     .lineLimit(2)
 
                 Text("生成于 \(DateFormatters.reportDate.string(from: report.createdAt))")
                     .font(.caption)
                     .foregroundStyle(.tertiary)
-
-                HStack(spacing: 12) {
-                    Label("\(estimateSize(report))", systemImage: "cylinder.split.2x1")
-                        .font(.caption2)
-                        .foregroundStyle(.tertiary)
-                }
             }
 
             Spacer()
 
             Image(systemName: "chevron.right")
-                .font(.caption.bold())
+                .font(.caption).fontWeight(.bold)
                 .foregroundStyle(.tertiary)
         }
         .padding(16)
@@ -529,12 +645,35 @@ struct ArchiveReportRow: View {
                 .shadow(color: .black.opacity(0.04), radius: 10, x: 0, y: 4)
         )
     }
+}
 
-    private func estimateSize(_ report: HealthReport) -> String {
-        // Estimate based on content length
-        let chars = report.content.count
-        if chars < 1000 { return "Small" }
-        if chars < 3000 { return "Medium" }
-        return "Large"
+// MARK: - Stat Badge
+
+struct StatBadge: View {
+    let label: String
+    let value: String
+    let icon: String
+    let color: Color
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Image(systemName: icon)
+                .font(.caption2)
+                .foregroundStyle(color)
+            VStack(alignment: .leading, spacing: 0) {
+                Text(value)
+                    .font(.caption2).fontWeight(.bold)
+                    .foregroundStyle(.primary)
+                Text(label)
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(10)
+        .background(
+            RoundedRectangle(cornerRadius: 10)
+                .fill(color.opacity(0.08))
+        )
     }
 }
