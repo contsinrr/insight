@@ -57,6 +57,7 @@ struct ReportHistoryView: View {
                     .padding(.top, 8)
                     .padding(.bottom, 40)
                 }
+                .background(Color.white.opacity(0.95)) // Add semi-opaque background to prevent see-through
             }
             .navigationTitle("")
             .navigationBarHidden(true)
