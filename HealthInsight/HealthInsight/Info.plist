@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>NSHealthShareUsageDescription</key>
+	<string>健康洞察需要读取您的健康数据以生成个性化健康分析报告。我们不会上传您的原始健康数据，仅将数据摘要发送到AI服务进行分析。</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>健康洞察不会写入任何健康数据。</string>
+</dict>
+</plist>
